@@ -16,6 +16,7 @@ RUN apt-get update \
         
 WORKDIR /opt
 RUN git clone https://gitlab.kitware.com/cmake/cmake.git
+WORKDIR /opt/cmake
 RUN ./bootstrap && make && make install
 
 # Here is where we hardcode the toolchain decision.
