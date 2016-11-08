@@ -1,60 +1,18 @@
-FROM debian:latest
+FROM sdthirlwall/raspberry-pi-cross-compiler
+MAINTAINER Gareth Jones <joneszone1975@gmail.com>
 
-RUN apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install -y apt-utils \
- && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure apt-utils \
- && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        automake \
-        curl \
-        fakeroot \
-        g++ \
-        git \
-        make \
-        runit \
-        sudo \
-        xz-utils
-        
+LABEL Description="This image is used to build the Able/Pipsta utilities (fpu ...) for the Raspberry Pi"
+
+RUN install-debian doxygen ninja-build pkgconf
+
+ENV DEFAULT_DOCKCROSS_IMAGE=geordiejones/raspberry-pi-cross-compiler
+
 WORKDIR /opt
-RUN git clone https://gitlab.kitware.com/cmake/cmake.git
+RUN git clone -b release https://gitlab.kitware.com/cmake/cmake.git
 WORKDIR /opt/cmake
 RUN ./bootstrap && make && make install
-
-# Here is where we hardcode the toolchain decision.
-ENV HOST=arm-linux-gnueabihf \
-    TOOLCHAIN=gcc-linaro-arm-linux-gnueabihf-raspbian-x64 \
-    RPXC_ROOT=/rpxc
-
-#    TOOLCHAIN=arm-rpi-4.9.3-linux-gnueabihf \
-#    TOOLCHAIN=gcc-linaro-arm-linux-gnueabihf-raspbian-x64 \
-
-WORKDIR $RPXC_ROOT
-RUN curl -L https://github.com/raspberrypi/tools/tarball/master \
-  | tar --wildcards --strip-components 3 -xzf - "*/arm-bcm2708/$TOOLCHAIN/"
-
-ENV ARCH=arm \
-    CROSS_COMPILE=$RPXC_ROOT/bin/$HOST- \
-    PATH=$RPXC_ROOT/bin:$PATH \
-    QEMU_PATH=/usr/bin/qemu-arm-static \
-    QEMU_EXECVE=1 \
-    SYSROOT=$RPXC_ROOT/sysroot
-
-WORKDIR $SYSROOT
-RUN curl -Ls https://github.com/sdhibit/docker-rpi-raspbian/raw/master/raspbian.2015.05.05.tar.xz \
-    | tar -xJf - \
- && curl -Ls https://github.com/resin-io-projects/armv7hf-debian-qemu/raw/master/qemu-arm-static \
-    > $SYSROOT/$QEMU_PATH \
- && chmod +x $SYSROOT/$QEMU_PATH \
- && mkdir -p $SYSROOT/build \
- && chroot $SYSROOT $QEMU_PATH /bin/sh -c '\
-        apt-get update \
-        && DEBIAN_FRONTEND=noninteractive apt-get install -y apt-utils \
-        && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure apt-utils \
-        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                libc6-dev \
-                symlinks \
-        && symlinks -cors /'
-
-COPY image/ /
+WORKDIR /opt
+RUN rm -rf cmake
 
 WORKDIR /build
 ENTRYPOINT [ "/rpxc/entrypoint.sh" ]
