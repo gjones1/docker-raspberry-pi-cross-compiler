@@ -1,6 +1,6 @@
 machine:
   environment:
-    RPXC_IMAGE: sdthirlwall/raspberry-pi-cross-compiler
+    RPXC_IMAGE: geordiejones/raspberry-pi-cross-compiler
     RPXC_SCRIPT: "/home/ubuntu/bin/rpxc"
 
   services:
