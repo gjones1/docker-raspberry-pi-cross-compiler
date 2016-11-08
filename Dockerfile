@@ -5,7 +5,6 @@ RUN apt-get update \
  && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure apt-utils \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         automake \
-        cmake \
         curl \
         fakeroot \
         g++ \
@@ -14,6 +13,10 @@ RUN apt-get update \
         runit \
         sudo \
         xz-utils
+        
+WORKDIR /opt
+RUN git clone https://gitlab.kitware.com/cmake/cmake.git
+RUN ./bootstrap && make && make install
 
 # Here is where we hardcode the toolchain decision.
 ENV HOST=arm-linux-gnueabihf \
